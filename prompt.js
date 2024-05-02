@@ -27,7 +27,7 @@ const createMigration = async (db, paths, name) => {
     await writeFile(lastTablesPath, lastTables);
     await writeFile(lastViewsPath, lastViews);
   };
-  const sql = await db.createMigration(fileSystem, name);
+  const sql = await db.createMigration(fileSystem, paths, name);
   return {
     sql,
     undo
@@ -72,7 +72,7 @@ const prompt = async (db, paths) => {
   else {
     try {
       await db.runMigration(name);
-      await db.makeTypes(fileSystem);
+      await db.makeTypes(fileSystem, paths);
       console.log('Migration ran successfully.');
     }
     catch (e) {

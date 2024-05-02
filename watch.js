@@ -1,6 +1,5 @@
 import { watch } from 'fs';
-import { readFile, writeFile, readdir } from 'fs/promises';
-import { join } from 'path';
+import fileSystem from './files.js';
 
 const watcher = (db, paths) => {
   process.on('exit', async () => await db.close());
@@ -8,12 +7,7 @@ const watcher = (db, paths) => {
   console.log('watching for changes');
   watch(paths.sql, { recursive: true }, async () => {
     try {
-      await db.makeTypes({
-        readFile,
-        writeFile,
-        readdir,
-        join
-      });
+      await db.makeTypes(fileSystem, paths);
     }
     catch (e) {
       console.log(e.message);
