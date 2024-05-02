@@ -1,0 +1,19 @@
+{
+  "name": "flyweight-client",
+  "version": "1.0.3",
+  "description": "Flyweight SQLite Client",
+  "types": "index.d.ts",
+  "type": "module",
+  "exports": {
+    "import": "./index.js",
+    "require": "./index.cjs"
+  },
+  "scripts": {
+    "build": "./node_modules/.bin/esbuild index.js --bundle --platform=node --format=cjs --packages=external --outfile=index.cjs"
+  },
+  "author": "Andrew Jones",
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "0.20.2"
+  }
+}
