@@ -3,6 +3,7 @@ import { stdin as input, stdout as output } from 'process';
 import { readFile, writeFile, rm } from 'fs/promises';
 import { join } from 'path';
 import fileSystem from './files.js';
+import makeFiles from './makeFiles.js';
 
 const now = () => {
   const currentDate = new Date();
@@ -49,7 +50,9 @@ const prompt = async (db, paths) => {
   }
   catch (e) {
     console.log('Error creating migration:\n');
-    await db.close();
+    if (!db.d1) {
+      await db.close();
+    }
     process.exit();
   }
   if (!migration.sql) {
@@ -66,12 +69,19 @@ const prompt = async (db, paths) => {
       await migration.undo();
     }
     finally {
-      await db.close();
+      if (!db.d1) {
+        await db.close();
+      }
     }
   }
   else {
     try {
-      await db.runMigration(name);
+      const path = join(paths.migrations, `${name}.sql`);
+      const sql = await readFile(path, 'utf8');
+      await db.runMigration(sql);
+      if (db.d1) {
+        await makeFiles(paths);
+      }
       await db.makeTypes(fileSystem, paths);
       console.log('Migration ran successfully.');
     }
@@ -81,7 +91,9 @@ const prompt = async (db, paths) => {
       throw e;
     }
     finally {
-      await db.close();
+      if (!db.d1) {
+        await db.close();
+      }
     }
   }
 }
