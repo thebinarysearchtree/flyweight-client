@@ -3,7 +3,11 @@ import fileSystem from './files.js';
 import makeFiles from './makeFiles.js';
 
 const watcher = (db, paths) => {
-  process.on('exit', async () => await db.close());
+  process.on('exit', async () => {
+    if (!db.d1) {
+      await db.close();
+    }
+  });
 
   console.log('watching for changes');
   watch(paths.sql, { recursive: true }, async () => {

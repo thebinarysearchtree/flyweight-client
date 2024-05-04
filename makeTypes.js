@@ -13,7 +13,9 @@ const makeTypes = async (db, paths) => {
     console.log(e.message);
   }
   finally {
-    await db.close();
+    if (!db.d1) {
+      await db.close();
+    }
   }
 }
 
