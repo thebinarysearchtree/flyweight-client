@@ -1,6 +1,6 @@
 {
   "name": "flyweight-client",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Flyweight SQLite Client",
   "types": "index.d.ts",
   "type": "module",
@@ -15,5 +15,8 @@
   "license": "MIT",
   "devDependencies": {
     "esbuild": "0.20.2"
+  },
+  "dependencies": {
+    "toml": "^3.0.0"
   }
 }
