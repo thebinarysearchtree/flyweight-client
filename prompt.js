@@ -37,15 +37,22 @@ const createMigration = async (db, paths, name) => {
   }
 };
 
-const prompt = async (db, paths) => {
-  let name;
-  let dbName;
+const getName = (db) => {
+  if (db.d1) {
+    if (process.argv.length > 3) {
+      return process.argv[3];
+    }
+    return process.argv[2];
+  }
   if (process.argv.length > 2) {
-    name = `${now()}_${process.argv.at(-1)}`;
+    return `${now()}_${process.argv.at(-1)}`;
   }
-  else {
-    name = now();
-  }
+  return now();
+}
+
+const prompt = async (db, paths) => {
+  const name = getName(db);
+  let dbName;
 
   let migration;
   try {
