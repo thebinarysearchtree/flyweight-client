@@ -37,14 +37,20 @@ const makeFiles = async (paths) => {
     }
     files += `${folder}: {`;
     const path = join(paths.sql, folder);
-    const queries = await readdir(path);
+    let queries;
+    try {
+      queries = await readdir(path);
+    }
+    catch {
+      continue;
+    }
     for (const query of queries) {
       if (!query.endsWith('.sql')) {
         continue;
       }
       const path = join(paths.sql, folder, query);
       const sql = await readFile(path);
-      files += `${query}: \`${sql}\`,`;
+      files += `${query.substring(0, query.length - 4)}: \`${sql}\`,`;
     }
     if (files.endsWith(',')) {
       files = files.substring(0, files.length - 1);
@@ -55,7 +61,7 @@ const makeFiles = async (paths) => {
     files = files.substring(0, files.length - 1);
   }
   files += `}\n}; export default files;\n`
-  await writeFile('files.js', files);
+  await writeFile(paths.files, files);
 }
 
 export default makeFiles;

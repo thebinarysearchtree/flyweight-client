@@ -10,6 +10,9 @@ const watcher = (db, paths) => {
   });
 
   console.log('watching for changes');
+  if (db.d1) {
+    makeFiles(paths);
+  }
   watch(paths.sql, { recursive: true }, async () => {
     try {
       if (db.d1) {
