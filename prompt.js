@@ -19,18 +19,32 @@ const now = () => {
   return `${year}${month}${day}${hours}${minutes}${seconds}`;
 };
 
-const createMigration = async (db, paths, name) => {
+const createMigration = async (db, paths, name, reset) => {
   const lastTablesPath = join(paths.migrations, 'lastTables.sql');
   const lastViewsPath = join(paths.migrations, 'lastViews.sql');
-  const lastTables = await readFile(lastTablesPath, 'utf8');
-  const lastViews = await readFile(lastViewsPath, 'utf8');
+  let lastTables;
+  let lastViews;
+  try {
+    lastTables = await readFile(lastTablesPath, 'utf8');
+  }
+  catch {
+    lastTables = '';
+  }
+  try {
+    lastViews = await readFile(lastViewsPath, 'utf8');
+  }
+  catch {
+    lastViews = '';
+  }
   const migrationPath = paths.wrangler || join(paths.migrations, `${name}.sql`);
   const undo = async () => {
-    await rm(migrationPath);
+    if (!reset) {
+      await rm(migrationPath);
+    }
     await writeFile(lastTablesPath, lastTables);
     await writeFile(lastViewsPath, lastViews);
   };
-  const sql = await db.createMigration(fileSystem, paths, name);
+  const sql = await db.createMigration(fileSystem, paths, name, reset);
   return {
     sql,
     undo
@@ -45,13 +59,19 @@ const getName = (db) => {
     return process.argv[2];
   }
   if (process.argv.length > 2) {
-    return `${now()}_${process.argv.at(-1)}`;
+    const name = process.argv[2];
+    return `${now()}_${name}`;
   }
   return now();
 }
 
-const prompt = async (db, paths) => {
-  const name = getName(db);
+const prompt = async (db, paths, reset) => {
+  process.on('exit', async () => {
+    if (!db.d1) {
+      await db.close();
+    }
+  });
+  const name = reset ? 'reset' : getName(db);
   let dbName;
 
   let migration;
@@ -86,14 +106,11 @@ const prompt = async (db, paths) => {
       const path = join('migrations', fileName);
       paths.wrangler = path;
     }
-    migration = await createMigration(db, paths, name);
+    migration = await createMigration(db, paths, name, reset);
   }
   catch (e) {
     console.log(e);
     console.log('Error creating migration:\n');
-    if (!db.d1) {
-      await db.close();
-    }
     process.exit();
   }
   if (!migration.sql) {
@@ -104,21 +121,21 @@ const prompt = async (db, paths) => {
     process.exit();
   }
   console.log(`\n${migration.sql}\n`);
-  console.log('Edit the migration file if necessary.');
+  if (!reset) {
+    console.log('Edit the migration file if necessary.');
+  }
   const rl = readline.createInterface({ input, output });
-  const response = await rl.question('Run migration? (y)/n:\n');
+  const question = reset ? 'Import tables?' : 'Run migration?';
+  const response = await rl.question(`${question} (y)/n:\n`);
   rl.close();
   if (response === 'n') {
-    try {
-      await migration.undo();
-    }
-    finally {
-      if (!db.d1) {
-        await db.close();
-      }
-    }
+    await migration.undo();
   }
   else {
+    if (reset) {
+      console.log('Tables imported');
+      return;
+    }
     try {
       if (db.d1) {
         execSync(`npx wrangler d1 migrations apply ${dbName}`);
@@ -136,11 +153,6 @@ const prompt = async (db, paths) => {
       await migration.undo();
       console.log('\nMigration rolled back due to:\n');
       throw e;
-    }
-    finally {
-      if (!db.d1) {
-        await db.close();
-      }
     }
   }
 }
