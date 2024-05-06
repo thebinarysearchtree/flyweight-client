@@ -3,7 +3,7 @@ import fileSystem from './files.js';
 import makeFiles from './makeFiles.js';
 
 const watcher = (db, paths) => {
-  process.on('exit', async () => {
+  process.on('beforeExit', async () => {
     if (!db.d1) {
       await db.close();
     }

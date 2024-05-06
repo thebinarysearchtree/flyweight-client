@@ -66,7 +66,7 @@ const getName = (db) => {
 }
 
 const prompt = async (db, paths, reset) => {
-  process.on('exit', async () => {
+  process.on('beforeExit', async () => {
     if (!db.d1) {
       await db.close();
     }
@@ -111,12 +111,18 @@ const prompt = async (db, paths, reset) => {
   catch (e) {
     console.log(e);
     console.log('Error creating migration:\n');
+    if (!db.d1) {
+      await db.close();
+    }
     process.exit();
   }
   if (!migration.sql) {
     console.log('No changes detected.');
     if (db.d1) {
       await rm(paths.wrangler);
+    }
+    else {
+      await db.close();
     }
     process.exit();
   }
