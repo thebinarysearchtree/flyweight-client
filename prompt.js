@@ -76,7 +76,7 @@ const prompt = async (db, paths, reset) => {
 
   let migration;
   try {
-    if (db.d1) {
+    if (db.d1 && !reset) {
       let migrationsDir = 'migrations';
       const file = await readFile('wrangler.toml', 'utf8');
       const parsed = toml.parse(file);
