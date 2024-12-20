@@ -1,9 +1,9 @@
 import fileSystem from './files.js';
 import makeFiles from './makeFiles.js';
 
-const makeTypes = async (db, paths) => {
+const makeTypes = async (db, paths, dbType) => {
   try {
-    if (db.d1) {
+    if (dbType === 'd1') {
       await makeFiles(paths);
     }
     await db.makeTypes(fileSystem, paths);
@@ -13,7 +13,7 @@ const makeTypes = async (db, paths) => {
     console.log(e.message);
   }
   finally {
-    if (!db.d1) {
+    if (dbType === 'sqlite') {
       await db.close();
     }
   }

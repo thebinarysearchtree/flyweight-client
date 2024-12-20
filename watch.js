@@ -2,20 +2,20 @@ import { watch } from 'fs';
 import fileSystem from './files.js';
 import makeFiles from './makeFiles.js';
 
-const watcher = (db, paths) => {
+const watcher = (db, paths, dbType) => {
   process.on('beforeExit', async () => {
-    if (!db.d1) {
+    if (dbType === 'sqlite') {
       await db.close();
     }
   });
 
   console.log('watching for changes');
-  if (db.d1) {
+  if (dbType === 'd1') {
     makeFiles(paths);
   }
   watch(paths.sql, { recursive: true }, async () => {
     try {
-      if (db.d1) {
+      if (dbType === 'd1') {
         await makeFiles(paths);
       }
       await db.makeTypes(fileSystem, paths);

@@ -51,8 +51,8 @@ const createMigration = async (db, paths, name, reset) => {
   }
 };
 
-const getName = (db) => {
-  if (db.d1) {
+const getName = (dbType) => {
+  if (dbType === 'd1') {
     if (process.argv.length > 3) {
       return process.argv[3];
     }
@@ -65,18 +65,18 @@ const getName = (db) => {
   return now();
 }
 
-const prompt = async (db, paths, reset) => {
+const prompt = async (db, paths, reset, dbType) => {
   process.on('beforeExit', async () => {
-    if (!db.d1) {
+    if (dbType === 'sqlite') {
       await db.close();
     }
   });
-  const name = reset ? 'reset' : getName(db);
+  const name = reset ? 'reset' : getName(dbType);
   let dbName;
 
   let migration;
   try {
-    if (db.d1 && !reset) {
+    if (dbType === 'd1' && !reset) {
       let migrationsDir = 'migrations';
       const file = await readFile('wrangler.toml', 'utf8');
       const parsed = toml.parse(file);
@@ -111,17 +111,17 @@ const prompt = async (db, paths, reset) => {
   catch (e) {
     console.log(e);
     console.log('Error creating migration:\n');
-    if (!db.d1) {
+    if (dbType === 'sqlite') {
       await db.close();
     }
     process.exit();
   }
   if (!migration.sql) {
     console.log('No changes detected.');
-    if (db.d1) {
+    if (dbType === 'd1') {
       await rm(paths.wrangler);
     }
-    else {
+    else if (dbType === 'sqlite') {
       await db.close();
     }
     process.exit();
@@ -143,7 +143,7 @@ const prompt = async (db, paths, reset) => {
       return;
     }
     try {
-      if (db.d1) {
+      if (dbType === 'd1') {
         execSync(`npx wrangler d1 migrations apply ${dbName}`);
         await makeFiles(paths);
       }
