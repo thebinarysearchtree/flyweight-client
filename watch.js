@@ -10,12 +10,12 @@ const watcher = (db, paths, dbType) => {
   });
 
   console.log('watching for changes');
-  if (dbType === 'd1') {
+  if (dbType !== 'sqlite') {
     makeFiles(paths);
   }
   watch(paths.sql, { recursive: true }, async () => {
     try {
-      if (dbType === 'd1') {
+      if (dbType !== 'sqlite') {
         await makeFiles(paths);
       }
       await db.makeTypes(fileSystem, paths);
