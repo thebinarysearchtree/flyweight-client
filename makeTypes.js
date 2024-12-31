@@ -6,7 +6,7 @@ const makeTypes = async (db, paths, dbType) => {
     if (dbType === 'd1') {
       await makeFiles(paths);
     }
-    await db.makeTypes(fileSystem, paths);
+    await db.makeTypes(fileSystem, paths, dbType);
     console.log('Types updated');
   }
   catch (e) {
