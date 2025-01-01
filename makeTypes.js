@@ -3,7 +3,7 @@ import makeFiles from './makeFiles.js';
 
 const makeTypes = async (db, paths, dbType) => {
   try {
-    if (dbType === 'd1') {
+    if (dbType !== 'sqlite') {
       await makeFiles(paths);
     }
     await db.makeTypes(fileSystem, paths, dbType);
