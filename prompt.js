@@ -153,15 +153,15 @@ const prompt = async (db, paths, reset, dbType) => {
         const sql = await readFile(path, 'utf8');
         await db.runMigration(sql);
       }
-      await db.makeTypes(fileSystem, paths);
       console.log('Migration ran successfully.');
-      return true;
     }
     catch (e) {
       await migration.undo();
       console.log('\nMigration rolled back due to:\n');
       throw e;
     }
+    await db.makeTypes(fileSystem, paths, dbType);
+    return true;
   }
 }
 
