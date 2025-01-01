@@ -136,11 +136,12 @@ const prompt = async (db, paths, reset, dbType) => {
   rl.close();
   if (response === 'n') {
     await migration.undo();
+    return false;
   }
   else {
     if (reset) {
       console.log('Tables imported');
-      return;
+      return true;
     }
     try {
       if (dbType === 'd1') {
@@ -154,6 +155,7 @@ const prompt = async (db, paths, reset, dbType) => {
       }
       await db.makeTypes(fileSystem, paths);
       console.log('Migration ran successfully.');
+      return true;
     }
     catch (e) {
       await migration.undo();
