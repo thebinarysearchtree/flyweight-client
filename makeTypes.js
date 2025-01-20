@@ -1,19 +1,19 @@
 import fileSystem from './files.js';
 import makeFiles from './makeFiles.js';
 
-const makeTypes = async (db, paths, dbType) => {
+const makeTypes = async (db, paths) => {
   try {
-    if (dbType !== 'sqlite') {
+    if (!db.supports.files) {
       await makeFiles(paths);
     }
-    await db.makeTypes(fileSystem, paths, dbType);
+    await db.makeTypes(fileSystem, paths);
     console.log('Types updated');
   }
   catch (e) {
     console.log(e.message);
   }
   finally {
-    if (dbType === 'sqlite') {
+    if (db.supports.closing) {
       await db.close();
     }
   }

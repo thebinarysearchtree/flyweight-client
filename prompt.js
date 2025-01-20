@@ -51,8 +51,8 @@ const createMigration = async (db, paths, name, reset) => {
   }
 };
 
-const getName = (dbType) => {
-  if (dbType === 'd1') {
+const getName = (features) => {
+  if (!features.migrations) {
     if (process.argv.length > 3) {
       return process.argv[3];
     }
@@ -66,17 +66,18 @@ const getName = (dbType) => {
 }
 
 const prompt = async (db, paths, reset, dbType) => {
+  const features = db.supports;
   process.on('beforeExit', async () => {
-    if (dbType === 'sqlite') {
+    if (db.supports.closing) {
       await db.close();
     }
   });
-  const name = reset ? 'reset' : getName(dbType);
+  const name = reset ? 'reset' : getName(features);
   let dbName;
 
   let migration;
   try {
-    if (dbType === 'd1' && !reset) {
+    if (!features.migrations && !reset) {
       let migrationsDir = 'migrations';
       const file = await readFile('wrangler.toml', 'utf8');
       const parsed = toml.parse(file);
@@ -111,17 +112,17 @@ const prompt = async (db, paths, reset, dbType) => {
   catch (e) {
     console.log(e);
     console.log('Error creating migration:\n');
-    if (dbType === 'sqlite') {
+    if (features.closing) {
       await db.close();
     }
     process.exit();
   }
   if (!migration.sql) {
     console.log('No changes detected.');
-    if (dbType === 'd1') {
+    if (!features.migrations) {
       await rm(paths.wrangler);
     }
-    else if (dbType === 'sqlite') {
+    else if (features.closing) {
       await db.close();
     }
     process.exit();
@@ -144,7 +145,7 @@ const prompt = async (db, paths, reset, dbType) => {
       return true;
     }
     try {
-      if (dbType === 'd1') {
+      if (!features.migrations) {
         execSync(`npx wrangler d1 migrations apply ${dbName}`);
         await makeFiles(paths);
       }
@@ -160,7 +161,7 @@ const prompt = async (db, paths, reset, dbType) => {
       console.log('\nMigration rolled back due to:\n');
       throw e;
     }
-    await db.makeTypes(fileSystem, paths, dbType);
+    await db.makeTypes(fileSystem, paths);
     return true;
   }
 }
