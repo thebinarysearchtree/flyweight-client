@@ -5,7 +5,6 @@ import { join } from 'path';
 import fileSystem from './files.js';
 import makeFiles from './makeFiles.js';
 import { execSync } from 'child_process';
-import toml from 'toml';
 
 const now = () => {
   const currentDate = new Date();
@@ -65,7 +64,7 @@ const getName = (features) => {
   return now();
 }
 
-const prompt = async (db, paths, reset, dbType) => {
+const prompt = async (db, paths, reset, dbName) => {
   const features = db.supports;
   process.on('beforeExit', async () => {
     if (db.supports.closing) {
@@ -73,30 +72,12 @@ const prompt = async (db, paths, reset, dbType) => {
     }
   });
   const name = reset ? 'reset' : getName(features);
-  let dbName;
 
   let migration;
   try {
     if (!features.migrations && !reset) {
-      let migrationsDir = 'migrations';
-      const file = await readFile('wrangler.toml', 'utf8');
-      const parsed = toml.parse(file);
       if (process.argv.length > 3) {
         dbName = process.argv[2];
-        const config = parsed.d1_databases.find(d => d.database_name === 'dbName');
-        if (config.migrations_dir) {
-          migrationsDir = config.migrations_dir;
-        }
-      }
-      else {
-        if (!parsed.d1_databases || parsed.d1_databases.length > 1) {
-          throw Error('No database name supplied');
-        }
-        const config = parsed.d1_databases[0];
-        dbName = config.database_name;
-        if (config.migrations_dir) {
-          migrationsDir = config.migrations_dir;
-        }
       }
       const out = execSync(`npx wrangler d1 migrations create ${dbName} ${name}`);
       const match = /Successfully created Migration \'(?<fileName>.+\.sql)\'\!/.exec(out);
@@ -104,7 +85,7 @@ const prompt = async (db, paths, reset, dbType) => {
         throw e;
       }
       const fileName = match.groups.fileName;
-      const path = join('migrations', fileName);
+      const path = join(paths.wranglerMigrations, fileName);
       paths.wrangler = path;
     }
     migration = await createMigration(db, paths, name, reset);
@@ -146,7 +127,7 @@ const prompt = async (db, paths, reset, dbType) => {
     }
     try {
       if (!features.migrations) {
-        execSync(`npx wrangler d1 migrations apply ${dbName}`);
+        execSync(`npx wrangler d1 migrations apply ${dbName} --local`);
         await makeFiles(paths);
       }
       else {
