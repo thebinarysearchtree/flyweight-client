@@ -1,9 +1,11 @@
-declare function prompt(database: any, paths: any, reset?: boolean): Promise<void>;
-declare function makeTypes(database: any, paths: any): Promise<void>;
-declare function watch(database: any, paths: any): void;
-
-export {
-  prompt,
-  makeTypes,
-  watch
+export interface TypeOptions {
+  db: any;
+  paths: any;
+  sample?: boolean;
+  testMode?: boolean;
 }
+
+export function prompt(database: any, paths: any, reset?: boolean): Promise<void>;
+export function makeFiles(paths: any): Promise<void>;
+export function makeTypes(options: TypeOptions): Promise<void>;
+export function watch(database: any, paths: any): void;

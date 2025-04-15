@@ -1,23 +1,26 @@
 import fileSystem from './files.js';
 import makeFiles from './makeFiles.js';
 
-const makeTypes = async (db, paths, getSample) => {
+const makeTypes = async (options) => {
+  const { db, paths, sample, testMode } = options;
   try {
     if (!db.supports.files) {
       await makeFiles(paths);
     }
-    await db.makeTypes(fileSystem, paths, getSample);
-    console.log('Types updated');
-    process.exit();
+    await db.makeTypes(fileSystem, paths, sample);
+    if (!testMode) {
+      console.log('Types updated');
+      process.exit();
+    }
   }
   catch (e) {
-    if (db.supports.closing) {
+    if (!testMode && db.supports.closing) {
       await db.close();
     }
     throw e;
   }
   finally {
-    if (db.supports.closing) {
+    if (!testMode && db.supports.closing) {
       await db.close();
     }
   }

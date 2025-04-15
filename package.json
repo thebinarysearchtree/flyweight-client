@@ -1,6 +1,6 @@
 {
   "name": "flyweight-client",
-  "version": "1.0.22",
+  "version": "1.0.23",
   "description": "Flyweight SQLite Client",
   "types": "index.d.ts",
   "type": "module",

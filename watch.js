@@ -1,6 +1,6 @@
 import { watch } from 'fs';
-import fileSystem from './files.js';
 import makeFiles from './makeFiles.js';
+import makeTypes from './makeTypes.js';
 
 const watcher = (db, paths) => {
   const features = db.supports;
@@ -19,7 +19,11 @@ const watcher = (db, paths) => {
       if (!features.files) {
         await makeFiles(paths);
       }
-      await db.makeTypes(fileSystem, paths);
+      await makeTypes({
+        db,
+        paths,
+        testMode: true
+      });
     }
     catch (e) {
       console.log(e.message);
