@@ -26,9 +26,17 @@ const readSql = async (path) => {
 const makeFiles = async (paths) => {
   const tables = await readSql(paths.tables);
   const views = await readSql(paths.views);
+  let computed;
+  try {
+    computed = await readFile(paths.computed, 'utf-8');
+  }
+  catch {
+    computed = JSON.stringify([]);
+  }
   let files = `const files = {
     tables: \`${tables.trim()}\`,
     views: \`${views.trim()}\`,
+    computed: \`${computed.trim()}\`,
     queries: {`;
   const folders = await readdir(paths.sql);
   for (const folder of folders) {
