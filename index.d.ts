@@ -6,6 +6,5 @@ export interface TypeOptions {
 }
 
 export function prompt(database: any, paths: any, reset?: boolean): Promise<void>;
-export function makeFiles(paths: any): Promise<void>;
 export function makeTypes(options: TypeOptions): Promise<void>;
 export function watch(database: any, paths: any): void;

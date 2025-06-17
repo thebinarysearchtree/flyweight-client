@@ -3,8 +3,6 @@ import { stdin as input, stdout as output } from 'process';
 import { readFile, writeFile, rm } from 'fs/promises';
 import { join } from 'path';
 import fileSystem from './files.js';
-import makeFiles from './makeFiles.js';
-import { execSync } from 'child_process';
 
 const now = () => {
   const currentDate = new Date();
@@ -50,13 +48,7 @@ const createMigration = async (db, paths, name, reset) => {
   }
 };
 
-const getName = (features) => {
-  if (!features.migrations) {
-    if (process.argv.length > 3) {
-      return process.argv[3];
-    }
-    return process.argv[2];
-  }
+const getName = () => {
   if (process.argv.length > 2) {
     const name = process.argv[2];
     return `${now()}_${name}`;
@@ -64,48 +56,25 @@ const getName = (features) => {
   return now();
 }
 
-const prompt = async (db, paths, reset, dbName) => {
-  const features = db.supports;
+const prompt = async (db, paths, reset) => {
   process.on('beforeExit', async () => {
-    if (db.supports.closing) {
-      await db.close();
-    }
+    await db.close();
   });
-  const name = reset ? 'reset' : getName(features);
+  const name = reset ? 'reset' : getName();
 
   let migration;
   try {
-    if (!features.migrations && !reset) {
-      if (process.argv.length > 3) {
-        dbName = process.argv[2];
-      }
-      const out = execSync(`npx wrangler d1 migrations create ${dbName} ${name}`);
-      const match = /Successfully created Migration \'(?<fileName>.+\.sql)\'\!/.exec(out);
-      if (!match) {
-        throw e;
-      }
-      const fileName = match.groups.fileName;
-      const path = join(paths.wranglerMigrations, fileName);
-      paths.wrangler = path;
-    }
     migration = await createMigration(db, paths, name, reset);
   }
   catch (e) {
     console.log(e);
     console.log('Error creating migration:\n');
-    if (features.closing) {
-      await db.close();
-    }
+    await db.close();
     process.exit();
   }
   if (!migration.sql) {
     console.log('No changes detected.');
-    if (!features.migrations) {
-      await rm(paths.wrangler);
-    }
-    else if (features.closing) {
-      await db.close();
-    }
+    await db.close();
     process.exit();
   }
   console.log(`\n${migration.sql}\n`);
@@ -126,15 +95,9 @@ const prompt = async (db, paths, reset, dbName) => {
       return true;
     }
     try {
-      if (!features.migrations) {
-        execSync(`npx wrangler d1 migrations apply ${dbName} --local`);
-        await makeFiles(paths);
-      }
-      else {
-        const path = join(paths.migrations, `${name}.sql`);
-        const sql = await readFile(path, 'utf8');
-        await db.runMigration(sql);
-      }
+      const path = join(paths.migrations, `${name}.sql`);
+      const sql = await readFile(path, 'utf8');
+      await db.runMigration(sql);
       console.log('Migration ran successfully.');
     }
     catch (e) {
